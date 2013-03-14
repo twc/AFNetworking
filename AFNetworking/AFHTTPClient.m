@@ -217,7 +217,21 @@ NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
     return [[self alloc] initWithBaseURL:url];
 }
 
+
++ (instancetype)clientWithBaseURL:(NSURL *)url
+                            queue:(NSOperationQueue *)queue {
+    return [[self alloc] initWithBaseURL:url
+                                   queue:queue];
+}
+
+
 - (id)initWithBaseURL:(NSURL *)url {
+    return [self initWithBaseURL:url
+                           queue:nil];
+}
+
+- (id)initWithBaseURL:(NSURL *)url
+queue:(NSOperationQueue *)queue {
     NSParameterAssert(url);
 
     self = [super init];
@@ -260,8 +274,18 @@ NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
     [self startMonitoringNetworkReachability];
 #endif
 
+// setup our operations queue
+if ( queue )
+{
+    // a queue was passed, use it
+    self.operationQueue = queue;
+}
+else
+{
+    // no queue, setup a new one
     self.operationQueue = [[NSOperationQueue alloc] init];
-	[self.operationQueue setMaxConcurrentOperationCount:NSOperationQueueDefaultMaxConcurrentOperationCount];
+    [self.operationQueue setMaxConcurrentOperationCount:NSOperationQueueDefaultMaxConcurrentOperationCount];
+}
 
     return self;
 }
