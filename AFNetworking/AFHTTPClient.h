@@ -158,6 +158,19 @@ typedef enum {
  */
 + (instancetype)clientWithBaseURL:(NSURL *)url;
 
+
+/**
+ Creates and initializes an `AFHTTPClient` object with the specified base URL
+ using the specified operations queue.
+
+ @param url The base URL for the HTTP client. This argument must not be `nil`.
+ @param queue the operations queue to use; if nil, then a new queue will be used.
+
+ @return The newly-initialized HTTP client
+ */
++ (instancetype)clientWithBaseURL:(NSURL *)url
+                            queue:(NSOperationQueue *)queue;
+
 /**
  Initializes an `AFHTTPClient` object with the specified base URL.
  
@@ -168,6 +181,20 @@ typedef enum {
  @return The newly-initialized HTTP client
  */
 - (id)initWithBaseURL:(NSURL *)url;
+
+/**
+ Initializes an `AFHTTPClient` object with the specified base URL using a new
+ operations queue.
+
+ @param url The base URL for the HTTP client. This argument must not be `nil`.
+ @param queue The operations queue to use; if nil, then a new queue will be used.
+
+ @discussion This is the designated initializer.
+
+ @return The newly-initialized HTTP client
+ */
+- (id)initWithBaseURL:(NSURL *)url
+                queue:(NSOperationQueue *)queue;
 
 ///-----------------------------------
 /// @name Managing Reachability Status
