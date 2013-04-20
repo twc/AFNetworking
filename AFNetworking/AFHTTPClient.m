@@ -700,12 +700,40 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
     [self enqueueHTTPRequestOperation:operation];
 }
 
+- (void)putPath:(NSString *)path
+           body:(NSString *)body
+        success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+        failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
+{
+	NSMutableURLRequest *request = [self requestWithMethod:@"PUT" path:path parameters:@{ /* empty params */ }];
+    if ( body )
+    {
+        [request setHTTPBody:[body dataUsingEncoding:self.stringEncoding]];
+    }
+	AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
+    [self enqueueHTTPRequestOperation:operation];
+}
+
 - (void)deletePath:(NSString *)path
         parameters:(NSDictionary *)parameters
            success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
            failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
 	NSURLRequest *request = [self requestWithMethod:@"DELETE" path:path parameters:parameters];
+	AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
+    [self enqueueHTTPRequestOperation:operation];
+}
+
+- (void)deletePath:(NSString *)path
+              body:(NSString *)body
+           success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+           failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
+{
+	NSMutableURLRequest *request = [self requestWithMethod:@"DELETE" path:path parameters:@{ /* empty params */ }];
+    if ( body )
+    {
+        [request setHTTPBody:[body dataUsingEncoding:self.stringEncoding]];
+    }
 	AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
     [self enqueueHTTPRequestOperation:operation];
 }
