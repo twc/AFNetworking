@@ -748,6 +748,20 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
     [self enqueueHTTPRequestOperation:operation];
 }
 
+- (void)patchPath:(NSString *)path
+             body:(NSString *)body
+          success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+          failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
+{
+    NSMutableURLRequest *request = [self requestWithMethod:@"PATCH" path:path parameters:@{ /* empty params */ }];
+    if ( body )
+    {
+        [request setHTTPBody:[body dataUsingEncoding:self.stringEncoding]];
+    }
+	AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
+    [self enqueueHTTPRequestOperation:operation];
+}
+
 #pragma mark - NSCoding
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
