@@ -287,6 +287,11 @@ else
     [self.operationQueue setMaxConcurrentOperationCount:NSOperationQueueDefaultMaxConcurrentOperationCount];
 }
 
+    // #ifdef included for backwards-compatibility
+#ifdef _AFNETWORKING_ALLOW_INVALID_SSL_CERTIFICATES_
+    self.allowsInvalidSSLCertificate = YES;
+#endif
+    
     return self;
 }
 
@@ -560,6 +565,7 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 #ifdef _AFNETWORKING_PIN_SSL_CERTIFICATES_
     operation.SSLPinningMode = self.defaultSSLPinningMode;
 #endif
+    operation.allowsInvalidSSLCertificate = self.allowsInvalidSSLCertificate;
 
     return operation;
 }
@@ -1134,7 +1140,7 @@ static const NSUInteger AFMultipartBodyStreamProviderDefaultBufferLength = 4096;
             
             [_buffer setLength:numberOfBytesRead];
 
-            if(numberOfBytesRead == 0) {
+            if (numberOfBytesRead == 0) {
                 self.currentHTTPBodyPart = nil;
             }
 

@@ -1,20 +1,11 @@
 Pod::Spec.new do |s|
-<<<<<<< HEAD
   s.name     = 'AFNetworking'
-  s.version  = '1.2.0'
-=======
-  s.name     = 'AFNetworking+TWC'
-  s.version  = '1.1.0-twc'
->>>>>>> b046aaa11db05a92fe53583dc175ae42ad0db2b0
+  s.version  = '1.2.1'
   s.license  = 'MIT'
   s.summary  = 'A delightful iOS and OS X networking framework.'
-  s.homepage = 'https://github.com/twc/AFNetworking.git'
+  s.homepage = 'https://github.com/AFNetworking/AFNetworking'
   s.authors  = { 'Mattt Thompson' => 'm@mattt.me', 'Scott Raymond' => 'sco@gowalla.com' }
-<<<<<<< HEAD
-  s.source   = { :git => 'https://github.com/AFNetworking/AFNetworking.git', :tag => '1.2.0' }
-=======
-  s.source   = { :git => 'https://github.com/twc/AFNetworking.git', :tag => '1.1.0-twc' }
->>>>>>> b046aaa11db05a92fe53583dc175ae42ad0db2b0
+  s.source   = { :git => 'https://github.com/AFNetworking/AFNetworking.git', :tag => '1.2.1' }
   s.source_files = 'AFNetworking'
   s.requires_arc = true
 

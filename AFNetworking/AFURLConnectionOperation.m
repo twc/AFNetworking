@@ -257,7 +257,12 @@ static inline BOOL AFStateTransitionIsValid(AFOperationState fromState, AFOperat
     self.outputStream = [NSOutputStream outputStreamToMemory];
     
     self.state = AFOperationReadyState;
-    
+
+    // #ifdef included for backwards-compatibility 
+#ifdef _AFNETWORKING_ALLOW_INVALID_SSL_CERTIFICATES_
+    self.allowsInvalidSSLCertificate = YES;
+#endif
+
     return self;
 }
 
@@ -606,25 +611,24 @@ willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challe
                 break;
             }
             case AFSSLPinningModeNone: {
-#ifdef _AFNETWORKING_ALLOW_INVALID_SSL_CERTIFICATES_
-                NSURLCredential *credential = [NSURLCredential credentialForTrust:serverTrust];
-                [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
-#else
-                SecTrustResultType result = 0;
-                OSStatus status = SecTrustEvaluate(serverTrust, &result);
-                NSAssert(status == errSecSuccess, @"SecTrustEvaluate error: %ld", (long int)status);
-                
-                if (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed) {
+                if (self.allowsInvalidSSLCertificate){
                     NSURLCredential *credential = [NSURLCredential credentialForTrust:serverTrust];
                     [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
                 } else {
-                    [[challenge sender] cancelAuthenticationChallenge:challenge];
+                    SecTrustResultType result = 0;
+                    OSStatus status = SecTrustEvaluate(serverTrust, &result);
+                    NSAssert(status == errSecSuccess, @"SecTrustEvaluate error: %ld", (long int)status);
+                    
+                    if (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed) {
+                        NSURLCredential *credential = [NSURLCredential credentialForTrust:serverTrust];
+                        [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
+                    } else {
+                        [[challenge sender] cancelAuthenticationChallenge:challenge];
+                    }
                 }
-#endif
                 break;
             }
         }
-        
     }
 }
 #endif
@@ -633,11 +637,10 @@ willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challe
 - (BOOL)connection:(NSURLConnection *)connection
 canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
 {
-#ifdef _AFNETWORKING_ALLOW_INVALID_SSL_CERTIFICATES_
-    if ([protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-        return YES;
+    if (self.allowsInvalidSSLCertificate &&
+       [protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            return YES;
     }
-#endif
     
     if (self.authenticationAgainstProtectionSpace) {
         return self.authenticationAgainstProtectionSpace(connection, protectionSpace);
@@ -651,13 +654,13 @@ canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
 - (void)connection:(NSURLConnection *)connection
 didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
 {
-#ifdef _AFNETWORKING_ALLOW_INVALID_SSL_CERTIFICATES_
-    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+
+    if (self.allowsInvalidSSLCertificate
+       && [challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
         [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
         return;
     }
-#endif
-    
+
     if (self.authenticationChallenge) {
         self.authenticationChallenge(connection, challenge);
     } else {
@@ -738,16 +741,17 @@ didReceiveResponse:(NSURLResponse *)response
 - (void)connection:(NSURLConnection __unused *)connection
     didReceiveData:(NSData *)data
 {
+    NSUInteger length = [data length];
     if ([self.outputStream hasSpaceAvailable]) {
         const uint8_t *dataBuffer = (uint8_t *) [data bytes];
-        [self.outputStream write:&dataBuffer[0] maxLength:[data length]];
+        [self.outputStream write:&dataBuffer[0] maxLength:length];
     }
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        self.totalBytesRead += [data length];
+        self.totalBytesRead += length;
         
         if (self.downloadProgress) {
-            self.downloadProgress([data length], self.totalBytesRead, self.response.expectedContentLength);
+            self.downloadProgress(length, self.totalBytesRead, self.response.expectedContentLength);
         }
     });
 }
@@ -804,7 +808,8 @@ didReceiveResponse:(NSURLResponse *)response
     self.error = [aDecoder decodeObjectForKey:@"error"];
     self.responseData = [aDecoder decodeObjectForKey:@"responseData"];
     self.totalBytesRead = [[aDecoder decodeObjectForKey:@"totalBytesRead"] longLongValue];
-    
+    self.allowsInvalidSSLCertificate = [[aDecoder decodeObjectForKey:@"allowsInvalidSSLCertificate"] boolValue];
+
     return self;
 }
 
@@ -828,6 +833,7 @@ didReceiveResponse:(NSURLResponse *)response
     [aCoder encodeObject:self.error forKey:@"error"];
     [aCoder encodeObject:self.responseData forKey:@"responseData"];
     [aCoder encodeObject:[NSNumber numberWithLongLong:self.totalBytesRead] forKey:@"totalBytesRead"];
+    [aCoder encodeObject:[NSNumber numberWithBool:self.allowsInvalidSSLCertificate] forKey:@"allowsInvalidSSLCertificate"];
 }
 
 #pragma mark - NSCopying
@@ -841,6 +847,7 @@ didReceiveResponse:(NSURLResponse *)response
     operation.authenticationChallenge = self.authenticationChallenge;
     operation.cacheResponse = self.cacheResponse;
     operation.redirectResponse = self.redirectResponse;
+    operation.allowsInvalidSSLCertificate = self.allowsInvalidSSLCertificate;
     
     return operation;
 }
