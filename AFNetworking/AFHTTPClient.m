@@ -656,6 +656,21 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 
 #pragma mark -
 
+- (void)executeRequestType:(NSString *)requestType
+                      path:(NSString *)path
+                parameters:(NSDictionary *)parameters
+                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+                   failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
+{
+	NSURLRequest *request = [self requestWithMethod:httpType
+                                               path:path
+                                         parameters:parameters];
+    AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request
+                                                                      success:success
+                                                                      failure:failure];
+    [self enqueueHTTPRequestOperation:operation];
+}
+
 - (void)getPath:(NSString *)path
      parameters:(NSDictionary *)parameters
         success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
